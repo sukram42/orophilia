@@ -1,0 +1,13 @@
+
+.homeContainer{
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    grid-template-areas: "list map"    
+}
+
+.map{
+    grid-area: map;    
+}
+.list{
+    grid-area: list;
+}

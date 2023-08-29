@@ -9,38 +9,84 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
-      Mountains: {
+      mountains: {
         Row: {
           created_at: string
           height: number | null
           id: number
+          lat: number | null
+          lon: number | null
           name: string | null
           region: number | null
+          tags: Json | null
+          wikidata: string | null
         }
         Insert: {
           created_at?: string
           height?: number | null
           id?: number
+          lat?: number | null
+          lon?: number | null
           name?: string | null
           region?: number | null
+          tags?: Json | null
+          wikidata?: string | null
         }
         Update: {
           created_at?: string
           height?: number | null
           id?: number
+          lat?: number | null
+          lon?: number | null
           name?: string | null
           region?: number | null
+          tags?: Json | null
+          wikidata?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "Mountains_region_fkey"
+            foreignKeyName: "mountains_region_fkey"
             columns: ["region"]
-            referencedRelation: "Region"
+            referencedRelation: "regions"
             referencedColumns: ["id"]
           }
         ]
       }
-      Region: {
+      "points-of-interest": {
+        Row: {
+          id: number
+          lat: number | null
+          lon: number | null
+          name: string | null
+          tags: Json | null
+          type: number | null
+        }
+        Insert: {
+          id?: number
+          lat?: number | null
+          lon?: number | null
+          name?: string | null
+          tags?: Json | null
+          type?: number | null
+        }
+        Update: {
+          id?: number
+          lat?: number | null
+          lon?: number | null
+          name?: string | null
+          tags?: Json | null
+          type?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "points-of-interest_type_fkey"
+            columns: ["type"]
+            referencedRelation: "points-of-interest-types"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      "points-of-interest-types": {
         Row: {
           id: number
           name: string | null
@@ -55,68 +101,132 @@ export interface Database {
         }
         Relationships: []
       }
-      Routes: {
+      regions: {
         Row: {
           id: number
-          mountain: number | null
+          name: string | null
+          wikidata: string | null
         }
         Insert: {
           id?: number
-          mountain?: number | null
+          name?: string | null
+          wikidata?: string | null
         }
         Update: {
           id?: number
-          mountain?: number | null
+          name?: string | null
+          wikidata?: string | null
+        }
+        Relationships: []
+      }
+      route2waypoint: {
+        Row: {
+          index: number
+          route: number
+          waypoint: number | null
+        }
+        Insert: {
+          index: number
+          route?: number
+          waypoint?: number | null
+        }
+        Update: {
+          index?: number
+          route?: number
+          waypoint?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "Routes_mountain_fkey"
-            columns: ["mountain"]
-            referencedRelation: "Mountains"
+            foreignKeyName: "route2waypoint_route_fkey"
+            columns: ["route"]
+            referencedRelation: "routes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "route2waypoint_waypoint_fkey"
+            columns: ["waypoint"]
+            referencedRelation: "waypoints"
             referencedColumns: ["id"]
           }
         ]
       }
-      TourReview: {
+      routes: {
+        Row: {
+          hike_difficulty: number | null
+          id: number
+          mountain: number | null
+          name: string | null
+          starting_point: number | null
+        }
+        Insert: {
+          hike_difficulty?: number | null
+          id?: number
+          mountain?: number | null
+          name?: string | null
+          starting_point?: number | null
+        }
+        Update: {
+          hike_difficulty?: number | null
+          id?: number
+          mountain?: number | null
+          name?: string | null
+          starting_point?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "routes_mountain_fkey"
+            columns: ["mountain"]
+            referencedRelation: "mountains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "routes_starting_point_fkey"
+            columns: ["starting_point"]
+            referencedRelation: "points-of-interest"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      "tour-review": {
         Row: {
           created_at: string
           description: string | null
-          id: number
           level: number | null
           route: number | null
+          tourReviewId: number
           user: number | null
         }
         Insert: {
           created_at?: string
           description?: string | null
-          id?: number
           level?: number | null
           route?: number | null
+          tourReviewId?: number
           user?: number | null
         }
         Update: {
           created_at?: string
           description?: string | null
-          id?: number
           level?: number | null
           route?: number | null
+          tourReviewId?: number
           user?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "TourReview_level_fkey"
+            foreignKeyName: "tour-review_level_fkey"
             columns: ["level"]
             referencedRelation: "TourTypes"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "TourReview_route_fkey"
+            foreignKeyName: "tour-review_route_fkey"
             columns: ["route"]
-            referencedRelation: "Routes"
+            referencedRelation: "routes"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "TourReview_user_fkey"
+            foreignKeyName: "tour-review_user_fkey"
             columns: ["user"]
             referencedRelation: "Users"
             referencedColumns: ["id"]
@@ -181,6 +291,24 @@ export interface Database {
             referencedColumns: ["id"]
           }
         ]
+      }
+      waypoints: {
+        Row: {
+          id: number
+          lat: number | null
+          lon: number | null
+        }
+        Insert: {
+          id?: number
+          lat?: number | null
+          lon?: number | null
+        }
+        Update: {
+          id?: number
+          lat?: number | null
+          lon?: number | null
+        }
+        Relationships: []
       }
     }
     Views: {
