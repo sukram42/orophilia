@@ -1,8 +1,8 @@
 import { Button } from "antd"
 import { supabase } from "../../supabaseClient"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Navigate } from "react-router-dom"
-import { MapContainer, TileLayer, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, Marker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
 export default function Login() {
@@ -31,18 +31,17 @@ export default function Login() {
         })
         setUser(data.user)
     }
-    console.log("user", user)
     return (
-            <div className="App">
-                <div>
+        <div className="App">
+            <div>
                 {user ? <Navigate to="/"></Navigate> : ""}
-                </div>
-                <div className="navigation">
-                    <div>
-                        <Button type="primary" onClick={signUp}>Sign up!</Button>
-                        <Button onClick={logIn}>Log In!</Button>
-                    </div>
+            </div>
+            <div className="navigation">
+                <div>
+                    <Button type="primary" onClick={signUp}>Sign up!</Button>
+                    <Button onClick={logIn}>Log In!</Button>
                 </div>
             </div>
+        </div>
     );
 }
