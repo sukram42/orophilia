@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Mountains, supabase } from "../../supabaseClient"
-import { Button, List, Tooltip } from "antd"
+import { Avatar, Button, List, Tooltip } from "antd"
 import { useNavigate } from "react-router-dom"
 
 import "./home.css"
@@ -17,11 +17,10 @@ export default function Root() {
 
     const [hoveredPosition, setHoveredPosition] = useState(null);
     const [hoveredRoute, setHoveredRoute] = useState(null);
-
+    const map = useRef()
 
     useEffect(() => {
         getMountains()
-
     }, [])
 
     //  Get Mountains
@@ -52,7 +51,41 @@ export default function Root() {
                 route
             `).eq("route", route.id)
 
-            console.log(routesInformation[route.id])
+            console.log("map", map, item)
+            async function choosemountain(item: mountains) {
+                setLoading(true)
+                setActiveMountain(item)
+                // Fetch the routes
+                // Get all routes
+                const { data: route_id } = await supabase.from("routes").select(`
+        id
+        `).eq("mountain", item.id)
+                let positions = {}
+                let { data: routesInformation } = await supabase.from("routes").select(`*`)
+
+                routesInformation = routesInformation.map((item) => ({ [item.id]: item })).reduce((a, b) => ({ ...a, ...b }))
+
+                let routes = await Promise.all(route_id.map(async route => {
+                    const { data: waypoints } = await supabase.from("route2waypoint").select(`
+                waypoints (lat, lon),
+                index, 
+                route
+            `).eq("route", route.id)
+
+                    console.log("map", map, item)
+                    map?.current?.setView([item.lat, item.lon])
+
+                    return {
+                        [route.id]: {
+                            route: routesInformation[route.id],
+                            waypoints: waypoints!.map(item => [...[item.waypoints.lat], ...[item.waypoints.lon]])
+                        }
+                    }
+                }))
+                setRoutes(routes.reduce((a, b) => ({ ...a, ...b })))
+                setLoading(false)
+            }
+
             return {
                 [route.id]: {
                     route: routesInformation[route.id],
@@ -81,13 +114,13 @@ export default function Root() {
         await supabase.auth.signOut()
         navigate("/login")
     }
-    function SetViewOnClick({ coords }) {
+    function SetViewOnClick(coords) {
         const map = useMap();
         map.setView(coords, map.getZoom());
         return null;
     }
 
-    const MapWithPolyline = ({ coordinates, route, width}) => {
+    const MapWithPolyline = ({ coordinates, route, width }) => {
         const map = useMap(); // Get access to the map instance
         const polylineRef = useRef();
 
@@ -106,42 +139,50 @@ export default function Root() {
                     positions={coordinates}
                     color="blue"
                     weight={width}
-                    />
+                />
             </div>
         );
-    };
-
-    const handleMouseOver = () => {
-        console.log('Mouse over marker');
-        // Add your desired behavior here
     };
 
     console.log(hoveredRoute)
     return (
         <div className="homeContainer">
-            <div className="list">
+            {/* <div className="list"> */}
                 <List
-                    header={<div>Header</div>}
-                    footer={<div>Footer</div>}
                     bordered
                     dataSource={mountains}
                     renderItem={(item) => (
-                        <List.Item onClick={() => chooseMountain(item)}>
-                            {item.name} {item.height}m
+                        <List.Item onClick={() => {
+                            chooseMountain(item);
+                        }
+                        }
+                            extra={
+                                <img
+                                    width={128}
+                                    alt="logo"
+                                    src={item['wikiimage_url']}
+                                />
+                            }
+                        >
+                            <List.Item.Meta
+                                title={item.name}
+                                description={item.height}
+                            />
                         </List.Item>
                     )}
                 />
                 <Button onClick={logout}>LogOut</Button>
-            </div>
+            {/* </div> */}
 
             <div className="map">
                 {activeMountain ?
-                    <MapContainer center={[activeMountain?.lat, activeMountain?.lon]} zoom={13} style={{ height: '500px', width: '100%' }}>
-                        <SetViewOnClick
-                            coords={[activeMountain?.lat, activeMountain?.lon]}></SetViewOnClick>
+                    <MapContainer ref={map} center={[activeMountain?.lat, activeMountain?.lon]} zoom={13} style={{ height: '500px', width: '100%' }}>
+                        {/* <SetViewOnClick
+                            coords={[activeMountain?.lat, activeMountain?.lon]}></SetViewOnClick> */}
                         <TileLayer
+                            url="https://tile.thunderforest.com/landscape/{z}/{x}/{y}.png?apikey=8551b7e373d54e60b3083e3ade4386ff"
                             // url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                            url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
+                            // url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
                             attribution='© OpenStreetMap-Mitwirkende, SRTM | Kartendarstellung: © OpenTopoMap (CC-BY-SA)'
                         />
                         {Object.values(routes).map((value, idx) => (
@@ -150,17 +191,19 @@ export default function Root() {
                                     <Popup position={hoveredPosition}>Difficulty  T{value.route.hike_difficulty}</Popup>)}
                                 <MapWithPolyline
                                     key={idx}
-                                    width={(hoveredRoute && hoveredRoute.route.id === value.route.id)?10:5}
+                                    width={(hoveredRoute && hoveredRoute.route.id === value.route.id) ? 10 : 5}
                                     route={value}
                                     coordinates={value.waypoints} color="blue" />
                             </div>
                         ))}
 
                     </MapContainer> : "Chose a mountain"}
-            </div>
-            <div>
-                {hoveredRoute && hoveredRoute.route.name}
-                {hoveredRoute && "T"+hoveredRoute.route.hike_difficulty}
+                <div>
+                    {hoveredRoute && hoveredRoute.route.name}
+                    {hoveredRoute && " |  T" + hoveredRoute.route.hike_difficulty}
+                    {hoveredRoute && "|   UIAA: " + hoveredRoute.route.uiaa_difficulty}
+                    {hoveredRoute && "|   Length: " + hoveredRoute.route.length + "m"}
+                </div>
             </div>
         </div>
     )

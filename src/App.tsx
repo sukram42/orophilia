@@ -3,24 +3,26 @@ import './App.css';
 import { Mountains, supabase } from './supabaseClient';
 
 import { Button } from 'antd';
+import { BrowserRouter, Navigate, Route, Router, Routes } from 'react-router-dom';
+import Home from './views/home/home';
+import Login from './views/login/login';
+import { Layout } from './views/layout/Layout';
+import Peaks from './views/peaks/peaks';
 
+import '@changey/react-leaflet-markercluster/dist/styles.min.css'
 
 function App() {
-  const [mountains, setMountains] = useState<Array<Mountains>>([])
-  const  [ user, setUser ] = useState()
-  useEffect(()=>{
-    getMountains()
-    getUser()
-  },[])
-
   return (
     <div className="App">
-      <div className="navigation">
-        <div>{mountains.map((m)=>(m.name))}</div>
-        <div>
-          <Button type="primary" onClick={signUp}>Sign up!</Button>
-        </div>
-      </div>
+      <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Peaks />} />
+              <Route path="/home" element={<Home/>}/>
+            </Route>
+              <Route path="/login" element={<Login />} />
+          </Routes>
+      </BrowserRouter>
     </div>
   );
 }
