@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Mountains, supabase } from "../../supabaseClient"
+import { Mountain, supabase } from "../../supabaseClient"
 import { Avatar, Button, List, Tooltip } from "antd"
 import { useNavigate } from "react-router-dom"
 
@@ -8,8 +8,8 @@ import { MapContainer, TileLayer, Polyline, useMap, Marker, Popup } from "react-
 
 export default function Root() {
 
-    const [mountains, setMountains] = useState<Array<Mountains>>([])
-    const [activeMountain, setActiveMountain] = useState<Mountains>()
+    const [mountains, setMountains] = useState<Array<Mountain>>([])
+    const [activeMountain, setActiveMountain] = useState<Mountain>()
     const [loading, setLoading] = useState<boolean>(false)
     const [user, setUser] = useState()
     const [routes, setRoutes] = useState({})
@@ -31,69 +31,75 @@ export default function Root() {
         const { data } = await supabase.from("mountains").select().in("id", mountain_ids)
         setMountains(data!);
     }
-    async function chooseMountain(item: Mountains) {
+    async function chooseMountain(item: Mountain) {
         setLoading(true)
         setActiveMountain(item)
         // Fetch the routes
         // Get all routes
         const { data: route_id } = await supabase.from("routes").select(`
         id
-        `).eq("mountain", item.id)
+        `).eq("mountain", item.mountain_id)
         let positions = {}
         let { data: routesInformation } = await supabase.from("routes").select(`*`)
 
         routesInformation = routesInformation.map((item) => ({ [item.id]: item })).reduce((a, b) => ({ ...a, ...b }))
 
-        let routes = await Promise.all(route_id.map(async route => {
-            const { data: waypoints } = await supabase.from("route2waypoint").select(`
-                waypoints (lat, lon),
-                index, 
-                route
-            `).eq("route", route.id)
+        let routes = await Promise.all(
+            route_id.map(async route => {
 
-            console.log("map", map, item)
-            async function choosemountain(item: mountains) {
-                setLoading(true)
-                setActiveMountain(item)
-                // Fetch the routes
-                // Get all routes
-                const { data: route_id } = await supabase.from("routes").select(`
-        id
-        `).eq("mountain", item.id)
-                let positions = {}
-                let { data: routesInformation } = await supabase.from("routes").select(`*`)
+                const { data: waypoints } = await supabase
+                    .from("route2waypoint")
+                    .select(` waypoints (lat, lon), index, route`)
+                    .eq("route", route.id)
 
-                routesInformation = routesInformation.map((item) => ({ [item.id]: item })).reduce((a, b) => ({ ...a, ...b }))
+                console.log("map", map, item, waypoints)
+                // console.log(data)
 
-                let routes = await Promise.all(route_id.map(async route => {
-                    const { data: waypoints } = await supabase.from("route2waypoint").select(`
-                waypoints (lat, lon),
-                index, 
-                route
-            `).eq("route", route.id)
+                async function choosemountain(item: mountains) {
+                    setLoading(true)
+                    setActiveMountain(item)
+                    // Fetch the routes
+                    // Get all routes
+                    const { data: route_id } = await supabase
+                        .from("routes")
+                        .select(`id`)
+                        .eq("mountain", item.id)
 
-                    console.log("map", map, item)
-                    map?.current?.setView([item.lat, item.lon])
+                    let positions = {}
+                    let { data: routesInformation } = await supabase.from("routes").select(`*`)
 
-                    return {
-                        [route.id]: {
-                            route: routesInformation[route.id],
-                            waypoints: waypoints!.map(item => [...[item.waypoints.lat], ...[item.waypoints.lon]])
+                    routesInformation = routesInformation.map((item) => ({ [item.id]: item })).reduce((a, b) => ({ ...a, ...b }))
+
+                    let routes = await Promise.all(route_id.map(async route => {
+                        const { data: waypoints } = await supabase.from("route2waypoint").select(`
+                            waypoints (lat, lon),
+                            index, 
+                            route
+                            `).eq("route", route.id)
+
+                        console.log("map", map, item)
+                        map?.current?.setView([item.lat, item.lon])
+
+                        return {
+                            [route.id]: {
+                                route: routesInformation[route.id],
+                                waypoints: waypoints!.map(item => [...[item.waypoints.lat], ...[item.waypoints.lon]])
+                            }
                         }
-                    }
-                }))
-                setRoutes(routes.reduce((a, b) => ({ ...a, ...b })))
-                setLoading(false)
-            }
-
-            return {
-                [route.id]: {
-                    route: routesInformation[route.id],
-                    waypoints: waypoints!.map(item => [...[item.waypoints.lat], ...[item.waypoints.lon]])
+                    }))
+                    setRoutes(routes.reduce((a, b) => ({ ...a, ...b })))
+                    setLoading(false)
                 }
-            }
-        }))
+
+                return {
+                    [route.id]: {
+                        route: routesInformation[route.id],
+                        waypoints: waypoints!.map(item => [...[item.waypoints.lat], ...[item.waypoints.lon]])
+                    }
+                }
+            }))
         setRoutes(routes.reduce((a, b) => ({ ...a, ...b })))
+        console.log(routes)
         setLoading(false)
     }
 
@@ -148,30 +154,30 @@ export default function Root() {
     return (
         <div className="homeContainer">
             {/* <div className="list"> */}
-                <List
-                    bordered
-                    dataSource={mountains}
-                    renderItem={(item) => (
-                        <List.Item onClick={() => {
-                            chooseMountain(item);
-                        }
-                        }
-                            extra={
-                                <img
-                                    width={128}
-                                    alt="logo"
-                                    src={item['wikiimage_url']}
-                                />
-                            }
-                        >
-                            <List.Item.Meta
-                                title={item.name}
-                                description={item.height}
+            <List
+                bordered
+                dataSource={mountains}
+                renderItem={(item) => (
+                    <List.Item onClick={() => {
+                        chooseMountain(item);
+                    }
+                    }
+                        extra={
+                            <img
+                                width={128}
+                                alt="logo"
+                                src={item['wikiimage_url']}
                             />
-                        </List.Item>
-                    )}
-                />
-                <Button onClick={logout}>LogOut</Button>
+                        }
+                    >
+                        <List.Item.Meta
+                            title={item.mountain_name}
+                            description={item.height}
+                        />
+                    </List.Item>
+                )}
+            />
+            <Button onClick={logout}>LogOut</Button>
             {/* </div> */}
 
             <div className="map">

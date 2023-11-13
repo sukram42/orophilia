@@ -13,40 +13,44 @@ export interface Database {
         Row: {
           created_at: string
           height: number | null
-          id: number
           lat: number | null
           lon: number | null
-          name: string | null
+          mountain_id: number
+          mountain_name: string | null
           region: number | null
           tags: Json | null
           wikidata: string | null
+          wikiimage_url: string | null
         }
         Insert: {
           created_at?: string
           height?: number | null
-          id?: number
           lat?: number | null
           lon?: number | null
-          name?: string | null
+          mountain_id?: number
+          mountain_name?: string | null
           region?: number | null
           tags?: Json | null
           wikidata?: string | null
+          wikiimage_url?: string | null
         }
         Update: {
           created_at?: string
           height?: number | null
-          id?: number
           lat?: number | null
           lon?: number | null
+          mountain_name?: number
           name?: string | null
           region?: number | null
           tags?: Json | null
           wikidata?: string | null
+          wikiimage_url?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "mountains_region_fkey"
             columns: ["region"]
+            isOneToOne: false
             referencedRelation: "regions"
             referencedColumns: ["id"]
           }
@@ -81,6 +85,7 @@ export interface Database {
           {
             foreignKeyName: "points-of-interest_type_fkey"
             columns: ["type"]
+            isOneToOne: false
             referencedRelation: "points-of-interest-types"
             referencedColumns: ["id"]
           }
@@ -121,30 +126,32 @@ export interface Database {
       }
       route2waypoint: {
         Row: {
-          index: number
-          route: number
-          waypoint: number | null
+          index: number | null
+          route: string | null
+          waypoint: string | null
         }
         Insert: {
-          index: number
-          route?: number
-          waypoint?: number | null
+          index?: number | null
+          route?: string | null
+          waypoint?: string | null
         }
         Update: {
-          index?: number
-          route?: number
-          waypoint?: number | null
+          index?: number | null
+          route?: string | null
+          waypoint?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "route2waypoint_route_fkey"
             columns: ["route"]
+            isOneToOne: false
             referencedRelation: "routes"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "route2waypoint_waypoint_fkey"
             columns: ["waypoint"]
+            isOneToOne: false
             referencedRelation: "waypoints"
             referencedColumns: ["id"]
           }
@@ -152,36 +159,73 @@ export interface Database {
       }
       routes: {
         Row: {
+          generated: boolean | null
           hike_difficulty: number | null
-          id: number
+          id: string
+          is_via_ferrata: boolean | null
+          length: number | null
           mountain: number | null
           name: string | null
+          route_id: string | null
           starting_point: number | null
+          uiaa_difficulty: number | null
+          via: string[] | null
+          via_ferrata_difficulty: number | null
         }
         Insert: {
+          generated?: boolean | null
           hike_difficulty?: number | null
-          id?: number
+          id: string
+          is_via_ferrata?: boolean | null
+          length?: number | null
           mountain?: number | null
           name?: string | null
+          route_id?: string | null
           starting_point?: number | null
+          uiaa_difficulty?: number | null
+          via?: string[] | null
+          via_ferrata_difficulty?: number | null
         }
         Update: {
+          generated?: boolean | null
           hike_difficulty?: number | null
-          id?: number
+          id?: string
+          is_via_ferrata?: boolean | null
+          length?: number | null
           mountain?: number | null
           name?: string | null
+          route_id?: string | null
           starting_point?: number | null
+          uiaa_difficulty?: number | null
+          via?: string[] | null
+          via_ferrata_difficulty?: number | null
         }
         Relationships: [
           {
             foreignKeyName: "routes_mountain_fkey"
             columns: ["mountain"]
+            isOneToOne: false
+            referencedRelation: "all_mountain_by_routes"
+            referencedColumns: ["mountain_id"]
+          },
+          {
+            foreignKeyName: "routes_mountain_fkey"
+            columns: ["mountain"]
+            isOneToOne: false
+            referencedRelation: "mountain_by_routes"
+            referencedColumns: ["mountain_id"]
+          },
+          {
+            foreignKeyName: "routes_mountain_fkey"
+            columns: ["mountain"]
+            isOneToOne: false
             referencedRelation: "mountains"
-            referencedColumns: ["id"]
+            referencedColumns: ["mountain_id"]
           },
           {
             foreignKeyName: "routes_starting_point_fkey"
             columns: ["starting_point"]
+            isOneToOne: false
             referencedRelation: "points-of-interest"
             referencedColumns: ["id"]
           }
@@ -216,18 +260,14 @@ export interface Database {
           {
             foreignKeyName: "tour-review_level_fkey"
             columns: ["level"]
+            isOneToOne: false
             referencedRelation: "TourTypes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tour-review_route_fkey"
-            columns: ["route"]
-            referencedRelation: "routes"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "tour-review_user_fkey"
             columns: ["user"]
+            isOneToOne: false
             referencedRelation: "Users"
             referencedColumns: ["id"]
           }
@@ -256,6 +296,7 @@ export interface Database {
           {
             foreignKeyName: "TourTypes_scale_fkey"
             columns: ["scale"]
+            isOneToOne: false
             referencedRelation: "TourTypes"
             referencedColumns: ["id"]
           }
@@ -287,6 +328,7 @@ export interface Database {
           {
             foreignKeyName: "Users_useritem_fkey"
             columns: ["useritem"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           }
@@ -294,17 +336,26 @@ export interface Database {
       }
       waypoints: {
         Row: {
-          id: number
+          elevation: number | null
+          hike_difficulty: number | null
+          id: string
+          is_via_ferrata: boolean | null
           lat: number | null
           lon: number | null
         }
         Insert: {
-          id?: number
+          elevation?: number | null
+          hike_difficulty?: number | null
+          id: string
+          is_via_ferrata?: boolean | null
           lat?: number | null
           lon?: number | null
         }
         Update: {
-          id?: number
+          elevation?: number | null
+          hike_difficulty?: number | null
+          id?: string
+          is_via_ferrata?: boolean | null
           lat?: number | null
           lon?: number | null
         }
@@ -312,7 +363,68 @@ export interface Database {
       }
     }
     Views: {
-      [_ in never]: never
+      all_mountain_by_routes: {
+        Row: {
+          created_at: string | null
+          height: number | null
+          lat: number | null
+          lon: number | null
+          max_hike_difficulty: number | null
+          max_length: number | null
+          max_uiaa: number | null
+          min_hike_difficulty: number | null
+          min_length: number | null
+          min_uiaa: number | null
+          mountain_id: number | null
+          mountain_name: string | null
+          n_routes: number | null
+          region: number | null
+          tags: Json | null
+          via_ferratas: number | null
+          wikidata: string | null
+          wikiimage_url: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mountains_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      mountain_by_routes: {
+        Row: {
+          created_at: string | null
+          height: number | null
+          lat: number | null
+          lon: number | null
+          max_hike_difficulty: number | null
+          max_length: number | null
+          max_uiaa: number | null
+          min_hike_difficulty: number | null
+          min_length: number | null
+          min_uiaa: number | null
+          mountain_id: number | null
+          mountain_name: string | null
+          n_routes: number | null
+          region: number | null
+          tags: Json | null
+          via_ferratas: number | null
+          wikidata: string | null
+          wikiimage_url: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mountains_region_fkey"
+            columns: ["region"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Functions: {
       [_ in never]: never

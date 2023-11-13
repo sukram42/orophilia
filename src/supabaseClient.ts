@@ -9,4 +9,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey)
 // Types
 import { Database } from './app/supabase';
 
-export type Mountains = Database['public']['Tables']['Mountains']['Row']
+export type Mountain = Database['public']['Views']['mountain_by_routes']['Row']
+export type Route = Database['public']['Tables']['routes']['Row']
+export type WayPoint = Database['public']['Tables']['waypoints']['Row']
+export type Region = Database['public']['Tables']['regions']['Row']

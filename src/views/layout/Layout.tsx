@@ -12,7 +12,7 @@ import "./layout.css"
 
 export function Layout() {
     return (
-        <div>
+        <div className="test">
             <div className="layoutContainer">
                 <div className="content">
                 <Outlet />
