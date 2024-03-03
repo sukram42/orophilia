@@ -32,7 +32,6 @@ export const loadingRoutesByMountain= createAsyncThunk(
                     .from("route2waypoint")
                     .select(`waypoints (lat, lon, elevation), index, route`)
                     .eq("route", route.id)
-        console.log("Waypoints: ", waypoints)
         return {route, waypoints}
     }))
     return newRoutes
@@ -44,13 +43,12 @@ export const regionSlice = createSlice({
   initialState,
   reducers: {
     loadit: (state) => {
-      console.log("load_action")
     }
   },
   extraReducers: (builder) => {
     builder.addCase(loadingRoutesByMountain.fulfilled, (state, action) => {
+      if (action.payload.length > 0)
         state.routes = {...state.routes, [action.payload[0].route.mountain]: action.payload}
-        console.log(state.routes)
     })
   }
 })

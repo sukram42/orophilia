@@ -1,0 +1,23 @@
+.planning-floating-overlay {
+    z-index: 10;
+    /* grid-row: 2 / 3; */
+    grid-column: 1/2;
+    max-width: 100vw;
+    pointer-events: none;
+    grid-area: map;
+    /* background-color: red; */
+}
+.planning-floating-overlay * {
+    pointer-events: all;
+}
+
+.main-container {
+
+    height: 100%;
+    width: 100%;
+
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "header" "map";
+}

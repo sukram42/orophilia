@@ -17,18 +17,22 @@
     "@changey/react-leaflet-markercluster": "^4.0.0-rc1",
     "@reduxjs/toolkit": "^1.8.1",
     "@supabase/supabase-js": "^2.32.0",
+    "@xstate/react": "^4.0.3",
     "antd": "^5.8.3",
     "antd-mobile": "^5.32.2",
+    "chart.js": "^4.4.1",
     "leaflet": "^1.9.4",
     "localforage": "^1.10.0",
     "match-sorter": "^6.3.1",
     "react": "^18.2.0",
+    "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.2.0",
     "react-leaflet": "^4.2.1",
     "react-redux": "^8.0.1",
     "react-router-dom": "^6.15.0",
     "react-virtualized": "^9.22.5",
-    "sort-by": "^1.2.0"
+    "sort-by": "^1.2.0",
+    "xstate": "^5.5.2"
   },
   "devDependencies": {
     "@testing-library/dom": "^9.2.0",

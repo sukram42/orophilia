@@ -1,15 +1,19 @@
 import { createAsyncThunk, createSelector, createSlice, PayloadAction } from "@reduxjs/toolkit"
 import { RootState } from "./store"
 import { Mountain, supabase } from "../supabaseClient"
+import { isDepsOptimizerEnabled } from "vite"
 
 export interface MountainState {
   mountains: Record<string, Mountain>
+  // Ids of mountains after filtering
   filteredMountains: string[]
+  filters: Record<string, any>
 }
 
 const initialState: MountainState = {
   mountains: {},
-  filteredMountains: []
+  filters: {},
+  filteredMountains: [],
 }
 
 export const loadMountains = createAsyncThunk(
@@ -22,9 +26,10 @@ export const loadMountains = createAsyncThunk(
 )
 export const loadMountainsById = createAsyncThunk(
   "mountain/loadByIds",
-  async (ids?: number[]) => {
-    if (!ids) {
-      const { data } = await supabase.from("all_mountain_by_routes").select().limit(100)
+  async (ids?: string[]) => {
+
+    if (ids === undefined) {
+      const { data } = await supabase.from("all_mountain_by_routes").select().limit(500)
       return data
     }
 
@@ -34,51 +39,70 @@ export const loadMountainsById = createAsyncThunk(
 )
 
 export enum MountainFilterTypes {
+  MOUNTAIN_NAME,
   HIKE_DIFFICULTY,
   UUIA_DIFFICULTY,
   REGION,
   MIN_HEIGHT,
-  MAX_NORTH, 
+  MAX_NORTH,
   MAX_SOUTH,
-  MAX_WEST, 
+  MAX_WEST,
   MAX_EAST
 }
 
 export interface MountainFilter {
   type: MountainFilterTypes,
-  value: string
+  value: any
 }
 
-export const filterMountain = createAsyncThunk(
-  "mountain/filterMountain",
-  async ({ filters }: { filters: MountainFilter[] }, thunkAPI) => {
-    let routeFilter = supabase.from("routes").select("mountain")
-    if (filters.length == 0) return []
+export const filterRoutes = createAsyncThunk(
+  "mountain/filterRoutes",
+  async (mountainFilter, thunkAPI) => {
+    // Add filter 
+    let filters = thunkAPI.getState().mountain.filters
 
-    for (const filter of filters) {
-      switch (filter.type) {
+    if (Object.keys(filters).length == 0) {
+      thunkAPI.dispatch(loadMountainsById())
+    }
+
+    // Route filters
+    let routeFilter = supabase.from("mountain_routes").select("mountain_id")
+    for (const fil of Object.keys(filters)) {
+      switch (Number(fil)) {
         case MountainFilterTypes.HIKE_DIFFICULTY:
-          routeFilter = routeFilter.eq("hike_difficulty", filter.value)
+          routeFilter = routeFilter.in("hike_difficulty", filters[fil])
           break;
+        case MountainFilterTypes.MOUNTAIN_NAME:
+          routeFilter = routeFilter.ilike("mountain_name", "%" + filters[fil] + "%")
+          break;
+
         case MountainFilterTypes.MAX_EAST:
-          routeFilter = routeFilter.lte("lon",filter.value)
+          routeFilter = routeFilter.lte("lon", filters[fil])
           break;
+
         case MountainFilterTypes.MAX_WEST:
-          routeFilter = routeFilter.gte("lon", filter.value)
+          routeFilter = routeFilter.gte("lon", filters[fil])
+          break;
+
         case MountainFilterTypes.MAX_NORTH:
-          routeFilter = routeFilter.lte("lat", filter.value)
+          routeFilter = routeFilter.lte("lat", filters[fil])
+          break;
+
         case MountainFilterTypes.MAX_SOUTH:
-          routeFilter = routeFilter.gte("lat", filter.value)
+          routeFilter = routeFilter.gte("lat", filters[fil])
+          break;
       }
     }
     const { data } = await routeFilter
-    const ids = data?.map(e => e.mountain)
-    thunkAPI.dispatch(loadMountainsById(ids))
+    const ids = data?.map(e => e.mountain_id)
+
+    thunkAPI.dispatch(loadMountainsById(Object.keys(filters).length === 0 ? undefined : ids))
     return ids
   }
 )
 
-export const getMoutainsInArea = createAsyncThunk(
+
+export const getMountainsInArea = createAsyncThunk(
   "mountain/getMountainsInArea",
   async ({ north, east, south, west }: { north: number, east: number, south: number, west: number }, thunkAPI) => {
     let { data } = await supabase.from("mountains")
@@ -95,12 +119,21 @@ export const mountainSlice = createSlice({
   "name": "mountains",
   initialState,
   reducers: {
-    loadit: (state) => {
-      console.log("load_action")
+    addFilter: (state, action: { payload: MountainFilter }) => {
+      state.filters[action.payload.type] = action.payload.value
+    },
+    removeAllFilter: (state) => {
+      state.filters = {}
+    },
+    removeFilter: (state, action: { payload: MountainFilterTypes }) => {
+      let filters = { ...state.filters }
+      delete filters[action.payload]
+      state.filters = { ...filters }
+
     }
   },
   extraReducers: (builder) => {
-    builder.addCase(getMoutainsInArea.fulfilled, (state, action) => {
+    builder.addCase(getMountainsInArea.fulfilled, (state, action) => {
       let mountainsAsRecord = (action.payload as Array<Mountain>)
         // Map ID to object
         .map((m, idx) => ({ [m.mountain_id]: { ...m } }))
@@ -109,33 +142,33 @@ export const mountainSlice = createSlice({
 
       // combine with old state
       state.mountains = {
-        ...state.mountains,
-        ...mountainsAsRecord
+        ...mountainsAsRecord,
+        ...state.mountains
       }
-
     }),
-      builder.addCase(filterMountain.fulfilled, (state, action) => {
-        state.filteredMountains = action.payload
-      })
-    builder.addCase(loadMountainsById.fulfilled, (state, action) => {
-      let mountainsAsRecord = (action.payload as Array<Mountain>)
-        // Map ID to object
-        .map((m, idx) => ({ [m.mountain_id]: { ...m } }))
-        // Reduce to new Record
-        .reduce((a, b) => ({ ...a, ...b }), {})
+      builder.addCase(filterRoutes.fulfilled, (state, action) => {
+        state.filteredMountains = action.payload // [...new Set(action.payload)]
+      }),
 
-      // combine with old state
-      state.mountains = {
-        ...state.mountains,
-        ...mountainsAsRecord
-      }
-    })
+      builder.addCase(loadMountainsById.fulfilled, (state, action) => {
+        let mountainsAsRecord = (action.payload as Array<Mountain>)
+          // Map ID to object
+          .map((m, idx) => ({ [m.mountain_id]: { ...m } }))
+          // Reduce to new Record
+          .reduce((a, b) => ({ ...a, ...b }), {})
+        // combine with old state
+        state.mountains = {
+          // ...state.mountains,
+          ...mountainsAsRecord
+        }
+      })
   }
 })
 
-export const { loadit } = mountainSlice.actions;
+export const { addFilter, removeAllFilter, removeFilter } = mountainSlice.actions;
 
 export const getMountains = (state: RootState) => state.mountain.mountains;
+export const getFilters = (state: RootState) => state.mountain.filters;
 const getFilteredMountainIds = (state: RootState) => state.mountain.filteredMountains;
 
 export const getFilteredMountains = createSelector([getMountains, getFilteredMountainIds], (mountains, ids) => {

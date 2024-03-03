@@ -12,6 +12,7 @@ import Peaks from './views/peaks/peaks';
 import '@changey/react-leaflet-markercluster/dist/styles.min.css'
 import { useDispatch } from 'react-redux';
 import { loadRegions } from './app/regionSlice';
+import Planning from './views/planning/planning';
 
 function App() {
 
@@ -29,6 +30,7 @@ function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<Peaks />} />
             <Route path="/home" element={<Home />} />
+            <Route path="/planning" element={<Planning />} />
           </Route>
           <Route path="/login" element={<Login />} />
         </Routes>
